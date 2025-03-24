@@ -43,7 +43,7 @@ A Flutter application that displays a collection of dog breeds using the dog.ceo
 
 4. Update the backend URL in `lib/presentations/providers/dog_provider.dart`:
    ```dart
-   static const String baseUrl = 'http://your-backend-url:3000' but it should be 'http://localhost:3000'
+   static const String baseUrl = 'http://localhost:3000';
    ```
 
 5. Run the app:
