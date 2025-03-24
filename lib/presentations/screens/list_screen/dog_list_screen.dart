@@ -40,11 +40,17 @@ class _DogListScreenState extends State<DogListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dog Breeds'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          Consumer<DogProvider>(
+            builder: (context, dogProvider, child) {
+              return Text('Page ${dogProvider.currentPage}');
+            },
+          ),
+        ],
       ),
       body: Consumer<DogProvider>(
-        builder: (context, dogProvider, _) {
-          if (dogProvider.error.isNotEmpty && dogProvider.breeds.isEmpty) {
+        builder: (context, dogProvider, child) {
+          if (dogProvider.error.isNotEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -60,87 +66,141 @@ class _DogListScreenState extends State<DogListScreen> {
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: () => dogProvider.fetchBreeds(refresh: true),
-            child: GridView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    hintText: 'Search breeds...',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) {
+                    dogProvider.setSearchTerm(value);
+                    dogProvider.fetchBreeds(refresh: true);
+                  },
+                ),
               ),
-              itemCount:
-                  dogProvider.breeds.length + (dogProvider.hasMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index >= dogProvider.breeds.length) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => dogProvider.fetchBreeds(refresh: true),
+                  child: GridView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(8),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.75,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemCount:
+                        dogProvider.breeds.length +
+                        (dogProvider.hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index >= dogProvider.breeds.length) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                final breed = dogProvider.breeds[index];
-                return Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: () async {
-                      final images = await dogProvider.fetchBreedImages(
-                        breed.breed,
-                      );
-                      if (!mounted) return;
+                      final breed = dogProvider.breeds[index];
+                      return Card(
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () async {
+                            final images = await dogProvider.fetchBreedImages(
+                              breed.breed,
+                            );
+                            if (!mounted) return;
 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => DogDetailScreen(
-                                breed: breed.copyWith(images: images),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => DogDetailScreen(
+                                      breed: breed.copyWith(images: images),
+                                    ),
                               ),
+                            );
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child:
+                                    breed.images.isNotEmpty
+                                        ? CachedNetworkImage(
+                                          imageUrl: breed.images.first,
+                                          fit: BoxFit.cover,
+                                          placeholder:
+                                              (context, url) => const Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
+                                          errorWidget: (context, url, error) {
+                                            return Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Icons.error,
+                                                  size: 50,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  'Error loading image',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).colorScheme.error,
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        )
+                                        : const Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.image_not_supported,
+                                                size: 50,
+                                              ),
+                                              SizedBox(height: 8),
+                                              Text(
+                                                'No image available',
+                                                style: TextStyle(fontSize: 10),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  breed.displayName.toUpperCase(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child:
-                              breed.images.isNotEmpty
-                                  ? CachedNetworkImage(
-                                    imageUrl: breed.images.first,
-                                    fit: BoxFit.cover,
-                                    placeholder:
-                                        (context, url) => const Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                    errorWidget:
-                                        (context, url, error) =>
-                                            const Icon(Icons.error, size: 50),
-                                  )
-                                  : const Center(
-                                    child: Icon(
-                                      Icons.image_not_supported,
-                                      size: 50,
-                                    ),
-                                  ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            breed.displayName.toUpperCase(),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           );
         },
       ),
