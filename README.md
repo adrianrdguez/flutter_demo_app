@@ -20,6 +20,10 @@ A Flutter application that displays a collection of dog breeds using the dog.ceo
 - Dart SDK
 - A running instance of the NestJS backend (see [Backend Setup](#backend-setup))
 
+### Repository
+
+[![Backend](https://img.shields.io/badge/Backend-barkibu__backend-green)](https://github.com/adrianrdguez/barkibu_backend)
+
 ### Installation
 
 1. Clone the repository:
@@ -39,7 +43,7 @@ A Flutter application that displays a collection of dog breeds using the dog.ceo
 
 4. Update the backend URL in `lib/presentations/providers/dog_provider.dart`:
    ```dart
-   static const String baseUrl = 'http://your-backend-url:3000';
+   static const String baseUrl = 'http://your-backend-url:3000' but it should be 'http://localhost:3000'
    ```
 
 5. Run the app:
