@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/dog_provider.dart';
 import '../detail_screen/dog_detail_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class DogListScreen extends StatefulWidget {
   const DogListScreen({super.key});
@@ -61,36 +62,26 @@ class _DogListScreenState extends State<DogListScreen> {
 
           return RefreshIndicator(
             onRefresh: () => dogProvider.fetchBreeds(refresh: true),
-            child: ListView.builder(
+            child: GridView.builder(
               controller: _scrollController,
+              padding: const EdgeInsets.all(8),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.75,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
               itemCount:
                   dogProvider.breeds.length + (dogProvider.hasMore ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index >= dogProvider.breeds.length) {
-                  return Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        const CircularProgressIndicator(),
-                        const SizedBox(height: 8),
-                        Text('Loading page ${dogProvider.currentPage}...'),
-                      ],
-                    ),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 final breed = dogProvider.breeds[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  child: ListTile(
-                    title: Text(
-                      breed.displayName.toUpperCase(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
                     onTap: () async {
                       final images = await dogProvider.fetchBreedImages(
                         breed.breed,
@@ -107,6 +98,45 @@ class _DogListScreenState extends State<DogListScreen> {
                         ),
                       );
                     },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child:
+                              breed.images.isNotEmpty
+                                  ? CachedNetworkImage(
+                                    imageUrl: breed.images.first,
+                                    fit: BoxFit.cover,
+                                    placeholder:
+                                        (context, url) => const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                    errorWidget:
+                                        (context, url, error) =>
+                                            const Icon(Icons.error, size: 50),
+                                  )
+                                  : const Center(
+                                    child: Icon(
+                                      Icons.image_not_supported,
+                                      size: 50,
+                                    ),
+                                  ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            breed.displayName.toUpperCase(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

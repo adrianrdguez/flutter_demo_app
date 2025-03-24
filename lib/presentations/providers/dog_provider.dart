@@ -11,9 +11,7 @@ class DogProvider extends ChangeNotifier {
   static const int _itemsPerPage = 10; // Items per page
   String _error = '';
 
-  // Update the base URL to point to your NestJS backend
-  static const String baseUrl =
-      'http://localhost:3000'; // Replace with your actual backend URL
+  static const String baseUrl = 'http://localhost:3000';
 
   List<DogBreed> get breeds => _breeds;
   bool get isLoading => _isLoading;
@@ -50,11 +48,21 @@ class DogProvider extends ChangeNotifier {
         final List<DogBreed> newBreeds = [];
         for (var entry in breedsMap.entries) {
           if ((entry.value as List).isEmpty) {
-            newBreeds.add(DogBreed(breed: entry.key));
+            // Fetch random image for this breed
+            final image = await fetchRandomBreedImage(entry.key);
+            newBreeds.add(
+              DogBreed(breed: entry.key, images: image != null ? [image] : []),
+            );
           } else {
             for (var subBreed in entry.value) {
+              // Fetch random image for this subbreed
+              final image = await fetchRandomBreedImage('$entry.key/$subBreed');
               newBreeds.add(
-                DogBreed(breed: entry.key, subBreed: subBreed.toString()),
+                DogBreed(
+                  breed: entry.key,
+                  subBreed: subBreed.toString(),
+                  images: image != null ? [image] : [],
+                ),
               );
             }
           }
@@ -77,9 +85,7 @@ class DogProvider extends ChangeNotifier {
   Future<List<String>> fetchBreedImages(String breed) async {
     try {
       final response = await http.get(
-        Uri.parse(
-          '$baseUrl/dogs/breed/$breed/images',
-        ), // Update to match your backend route
+        Uri.parse('$baseUrl/dogs/breed/$breed/images'),
       );
 
       if (response.statusCode == 200) {
@@ -92,18 +98,23 @@ class DogProvider extends ChangeNotifier {
     }
   }
 
-  // Add new method for random image
   Future<String?> fetchRandomBreedImage(String breed) async {
     try {
+      // URL encode the breed name to handle special characters and slashes
+      final encodedBreed = Uri.encodeComponent(breed);
       final response = await http.get(
-        Uri.parse(
-          '$baseUrl/dogs/breed/$breed/images/random',
-        ), // Update to match your backend route
+        Uri.parse('$baseUrl/dogs/breed/$encodedBreed/images'),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return data['message'] as String;
+        final images = List<String>.from(data['message']);
+        if (images.isNotEmpty) {
+          // Get a random image from the list
+          final random =
+              images[DateTime.now().millisecondsSinceEpoch % images.length];
+          return random;
+        }
       }
       return null;
     } catch (e) {
