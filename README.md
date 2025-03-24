@@ -28,12 +28,12 @@ A Flutter application that displays a collection of dog breeds using the dog.ceo
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/adrianrdguez/flutter_demo_app.git
    ```
 
 2. Navigate to the project directory:
    ```bash
-   cd flutter_dog_breeds
+   cd flutter_demo_app
    ```
 
 3. Install dependencies:
