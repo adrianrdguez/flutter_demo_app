@@ -22,7 +22,7 @@ A Flutter application that displays a collection of dog breeds using the dog.ceo
 
 ### Repository
 
-[![Backend](https://img.shields.io/badge/Backend-barkibu__backend-green)](https://github.com/adrianrdguez/barkibu_backend)
+[![Backend](https://img.shields.io/badge/Backend-barkibu__backend-green)](https://github.com/adrianrdguez/demo_backend)
 
 ### Installation
 
